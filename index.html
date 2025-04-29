@@ -76,6 +76,8 @@ function loadCars() {
         .then(cars => {
             const container = document.getElementById('car-container');
             container.innerHTML = '';
+            console.log("Fetched cars:", cars);
+            
             cars.forEach(car => {
                 const carCard = document.createElement('div');
                 carCard.className = 'car-card';
