@@ -35,91 +35,80 @@
 </footer>
 
 <script>
-let isAdmin = false;
-
-document.getElementById('admin-login').addEventListener('click', function() {
-    const password = prompt('Enter Admin Password:');
-    if (password === 'admin123') {
-        isAdmin = true;
-        document.getElementById('admin-section').style.display = 'block';
-        loadCars();
-    } else {
-        alert('Wrong password!');
-    }
-});
-
-document.getElementById('add-car-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const newCar = {
-        make: document.getElementById('make').value,
-        model: document.getElementById('model').value,
-        year: document.getElementById('year').value,
-        rental_price_per_day: document.getElementById('price').value,
-        image_url: document.getElementById('image').value
-    };
-    fetch('http://127.0.0.1:5000/add_car', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(newCar)
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message);
-        document.getElementById('add-car-form').reset();
-        loadCars();
-    });
-});
-
-function loadCars() {
-    fetch('http://127.0.0.1:5000/get_cars')
-        .then(response => response.json())
-        .then(cars => {
-            const container = document.getElementById('car-container');
-            container.innerHTML = '';
-            console.log("Fetched cars:", cars);
-            
-            cars.forEach(car => {
-                const carCard = document.createElement('div');
-                carCard.className = 'car-card';
-                carCard.innerHTML = `
-                    <img src="${car.image_url}" alt="${car.make} ${car.model}">
-                    <h2>${car.make} ${car.model}</h2>
-                    <p>Year: ${car.year}</p>
-                    <p>Rental Price: $${car.rental_price_per_day}/day</p>
-                    <button onclick="rentCar(${car.id})">Rent Now</button>
-                    ${isAdmin ? `<button onclick="deleteCar(${car.id})" class="delete-btn">Delete Car</button>` : ''}
-                `;
-                container.appendChild(carCard);
-            });
-        });
-}
-
-function rentCar(id) {
-    fetch('http://127.0.0.1:5000/rent_car/' + id, {
-        method: 'POST'
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message);
-        loadCars();
-    });
-}
-
-function deleteCar(id) {
-    if (confirm('Are you sure you want to delete this car?')) {
-        fetch('http://127.0.0.1:5000/delete_car/' + id, {
-            method: 'DELETE'
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.message);
+    let isAdmin = false;
+    
+    document.getElementById('admin-login').addEventListener('click', function () {
+        const password = prompt('Enter Admin Password:');
+        if (password === 'admin123') {
+            isAdmin = true;
+            document.getElementById('admin-section').style.display = 'block';
             loadCars();
-        });
+        } else {
+            alert('Wrong password!');
+        }
+    });
+    
+    function loadCars() {
+        fetch('http://127.0.0.1:5000/get_cars')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Fetch failed");
+                }
+                return response.json();
+            })
+            .then(cars => {
+                console.log("Fetched cars:", cars);
+                const container = document.getElementById('car-container');
+                container.innerHTML = '';
+    
+                if (cars.length === 0) {
+                    container.innerHTML = '<p>No cars available.</p>';
+                }
+    
+                cars.forEach(car => {
+                    const carCard = document.createElement('div');
+                    carCard.className = 'car-card';
+                    carCard.innerHTML = `
+                        <img src="${car.image_url}" alt="${car.make} ${car.model}">
+                        <h2>${car.make} ${car.model}</h2>
+                        <p>Year: ${car.year}</p>
+                        <p>Rental Price: $${car.rental_price_per_day}/day</p>
+                        <button onclick="rentCar(${car.id})">Rent Now</button>
+                        ${isAdmin ? `<button onclick="deleteCar(${car.id})" class="delete-btn">Delete Car</button>` : ''}
+                    `;
+                    container.appendChild(carCard);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching car data:', error);
+                const container = document.getElementById('car-container');
+                container.innerHTML = '<p style="color: red;">Failed to load cars.</p>';
+            });
     }
-}
-
-loadCars();
-</script>
+    
+    function rentCar(id) {
+        fetch(`http://127.0.0.1:5000/rent_car/${id}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                loadCars();
+            });
+    }
+    
+    function deleteCar(id) {
+        if (confirm("Delete this car?")) {
+            fetch(`http://127.0.0.1:5000/delete_car/${id}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    loadCars();
+                });
+        }
+    }
+    
+    loadCars();
+    </script>
+    
 
 </body>
 </html>
