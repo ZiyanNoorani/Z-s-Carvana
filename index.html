@@ -66,18 +66,24 @@
                 }
     
                 cars.forEach(car => {
-                    const carCard = document.createElement('div');
-                    carCard.className = 'car-card';
-                    carCard.innerHTML = `
-                        <img src="${car.image_url}" alt="${car.make} ${car.model}">
-                        <h2>${car.make} ${car.model}</h2>
-                        <p>Year: ${car.year}</p>
-                        <p>Rental Price: $${car.rental_price_per_day}/day</p>
-                        <button onclick="rentCar(${car.id})">Rent Now</button>
-                        ${isAdmin ? `<button onclick="deleteCar(${car.id})" class="delete-btn">Delete Car</button>` : ''}
-                    `;
-                    container.appendChild(carCard);
-                });
+                const card = document.createElement('div');
+                card.className = 'car-card';
+                card.innerHTML = `
+                <img src="${car.image_url}" alt="${car.make} ${car.model}">
+                <h2>${car.make} ${car.model}</h2>
+                <p>Year: ${car.year}</p>
+                <p>Rental Price: $${car.rental_price_per_day}/day</p>
+                ${car.is_available
+                ? `<button onclick="rentCar(${car.id})">Rent Now</button>`
+                : `<p style="color:red;font-weight:bold;">Currently Rented</p>
+                ${isAdmin ? `<button onclick="unrentCar(${car.id})" class="delete-btn">Unrent</button>` : ''}`
+        }
+                ${isAdmin && car.is_available
+                ? `<button class="delete-btn" onclick="deleteCar(${car.id})">Delete</button>` : ''}
+                 `;
+                container.appendChild(card);
+            });
+
             })
             .catch(error => {
                 console.error('Error fetching car data:', error);
@@ -94,7 +100,15 @@
                 loadCars();
             });
     }
-    
+    function unrentCar(id) {
+    fetch(`http://127.0.0.1:5000/unrent_car/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+            loadCars();
+        });
+    }
+
     function deleteCar(id) {
         if (confirm("Delete this car?")) {
             fetch(`http://127.0.0.1:5000/delete_car/${id}`, { method: 'DELETE' })
